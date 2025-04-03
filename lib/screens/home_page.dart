@@ -113,7 +113,8 @@ class _HomePageState extends State<HomePage> {
       // 🔹 Barra de navegação inferior
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,
-        onTap: _onItemTapped, // Função que lida com a navegação
+        cartItems: [], // Adicione a lista de itens do carrinho aqui
+        onTap: _onItemTapped,
       ),
     );
   }
