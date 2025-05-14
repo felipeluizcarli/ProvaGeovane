@@ -21,11 +21,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-assets:
-  - assets/pizza_banner.png
-  - assets/margherita.png
-  - assets/pepperoni.png
-  - assets/quatro_queijos.png
-  - assets/bricadeiro.png
-  - assets/calabresa.png
-  - assets/Strogofe.png
+  assets:
+    - assets/images/
+
