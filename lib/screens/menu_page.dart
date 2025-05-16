@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/pizza_item.dart'; // Certifique-se de importar a classe PizzaItem corretamente
+import '../models/pizza_item.dart';
+import '../database/cart_database.dart';
 import 'cart_page.dart';
+import 'add_pizza_page.dart';
+import 'edit_pizza_page.dart';
+import 'orders_page.dart';
 
 class MenuPage extends StatefulWidget {
   @override
@@ -8,17 +12,28 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  final List<PizzaItem> menuItems = [
-    PizzaItem(name: 'Margherita', price: 'R\$ 30,00', imagePath: 'assets/images/margherita.png'),
-    PizzaItem(name: 'Pepperoni', price: 'R\$ 35,00', imagePath: 'assets/images/pepperoni.png'),
-    PizzaItem(name: 'Quatro Queijos', price: 'R\$ 40,00', imagePath: 'assets/images/quatro_queijos.png'),
-    PizzaItem(name: 'Brigadeiro', price: 'R\$ 39,00', imagePath: 'assets/images/brigadeiro.png'),
-    PizzaItem(name: 'Strogonoff', price: 'R\$ 44,00', imagePath: 'assets/images/strogonoff.png'),
-    PizzaItem(name: 'Calabresa', price: 'R\$ 32,00', imagePath: 'assets/images/calabresa.png'),
-    PizzaItem(name: 'Bacon Supreme', price: 'R\$ 42,00', imagePath: 'assets/images/bacon_supreme.png'),
-  ];
-
+  final List<PizzaItem> menuItems = [];
   final List<PizzaItem> cartItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMenuFromDatabase();
+  }
+  /// Carrega a lista de pizzas do banco de dados para o estado atual.
+  ///
+  /// Essa fun o   chamada na inicializa o do widget e toda vez que uma
+  /// pizza   exlu da do banco de dados.
+  ///
+  /// O estado   atualizado com a lista de pizzas retornada pelo banco
+
+  Future<void> _loadMenuFromDatabase() async {
+    final pizzas = await CartDatabase.instance.getAllPizzas();
+    setState(() {
+      menuItems.clear();
+      menuItems.addAll(pizzas);
+    });
+  }
 
   void _addToCart(PizzaItem pizza) {
     setState(() {
@@ -26,16 +41,67 @@ class _MenuPageState extends State<MenuPage> {
     });
   }
 
+  void _confirmDeletePizza(PizzaItem pizza) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Excluir Pizza'),
+        content: Text('Tem certeza que deseja excluir "${pizza.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await CartDatabase.instance.deletePizza(pizza.id!);
+              Navigator.pop(context);
+              _loadMenuFromDatabase();
+            },
+            child: Text('Excluir'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Menu')),
-      body: ListView.builder(
-        itemCount: menuItems.length,
-        itemBuilder: (context, index) {
-          return pizzaItem(menuItems[index]);
-        },
+      appBar: AppBar(
+        title: Text('Menu'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.receipt_long),
+            tooltip: 'Pedidos Realizados',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => OrdersPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.add),
+            tooltip: 'Adicionar Pizza',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AddPizzaPage()),
+              );
+            },
+          )
+        ],
       ),
+      body: menuItems.isEmpty
+          ? Center(child: Text('Nenhuma pizza cadastrada.'))
+          : ListView.builder(
+              itemCount: menuItems.length,
+              itemBuilder: (context, index) {
+                return pizzaItem(menuItems[index]);
+              },
+            ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: [
@@ -50,12 +116,18 @@ class _MenuPageState extends State<MenuPage> {
               Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MenuPage()));
               break;
             case 1:
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => CartPage(cartItems: cartItems),
+                  builder: (_) => CartPage(cartItems: List.from(cartItems)),
                 ),
-              );
+              ).then((pedidoFinalizado) {
+                if (pedidoFinalizado == true) {
+                  setState(() {
+                    cartItems.clear(); // 🧹 limpa carrinho após pedido
+                  });
+                }
+              });
               break;
             case 2:
               // Lógica de Checkout
@@ -88,6 +160,35 @@ class _MenuPageState extends State<MenuPage> {
           },
           child: Text('Adicionar'),
         ),
+        onLongPress: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.edit),
+                  title: Text('Editar'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => EditPizzaPage(pizza: pizza)),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.delete, color: Colors.red),
+                  title: Text('Excluir', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmDeletePizza(pizza);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
