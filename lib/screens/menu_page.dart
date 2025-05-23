@@ -5,6 +5,7 @@ import 'cart_page.dart';
 import 'add_pizza_page.dart';
 import 'edit_pizza_page.dart';
 import 'orders_page.dart';
+import 'tracking_page.dart'; // ✅ Importado para abrir tela de rastreio
 
 class MenuPage extends StatefulWidget {
   @override
@@ -20,12 +21,6 @@ class _MenuPageState extends State<MenuPage> {
     super.initState();
     _loadMenuFromDatabase();
   }
-  /// Carrega a lista de pizzas do banco de dados para o estado atual.
-  ///
-  /// Essa fun o   chamada na inicializa o do widget e toda vez que uma
-  /// pizza   exlu da do banco de dados.
-  ///
-  /// O estado   atualizado com a lista de pizzas retornada pelo banco
 
   Future<void> _loadMenuFromDatabase() async {
     final pizzas = await CartDatabase.instance.getAllPizzas();
@@ -130,10 +125,13 @@ class _MenuPageState extends State<MenuPage> {
               });
               break;
             case 2:
-              // Lógica de Checkout
+              // Lógica de Checkout (a ser implementada)
               break;
             case 3:
-              // Lógica de Rastreio
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => TrackingPage()),
+              );
               break;
           }
         },
