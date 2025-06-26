@@ -5,7 +5,8 @@ import 'cart_page.dart';
 import 'add_pizza_page.dart';
 import 'edit_pizza_page.dart';
 import 'orders_page.dart';
-import 'tracking_page.dart'; // ✅ Importado para abrir tela de rastreio
+import 'tracking_page.dart';
+import 'checkout_page.dart'; // ✅ Importação adicionada
 
 class MenuPage extends StatefulWidget {
   @override
@@ -119,13 +120,16 @@ class _MenuPageState extends State<MenuPage> {
               ).then((pedidoFinalizado) {
                 if (pedidoFinalizado == true) {
                   setState(() {
-                    cartItems.clear(); // 🧹 limpa carrinho após pedido
+                    cartItems.clear(); // limpa carrinho após pedido
                   });
                 }
               });
               break;
             case 2:
-              // Lógica de Checkout (a ser implementada)
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => CheckoutPage()), // ✅ Aqui chamamos a tela de checkout com CEP
+              );
               break;
             case 3:
               Navigator.push(
